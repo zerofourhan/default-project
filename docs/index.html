@@ -3,66 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>踩地??Minesweeper</title>
-  <meta name="description" content="經典踩地?��??��??��??��?絢�??��?子特?��? />
+  <title>踩地雷 Minesweeper</title>
+  <meta name="description" content="經典踩地雷網頁遊戲，插旗時有絢麗的粒子特效。" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=6" />
 </head>
 <body>
   <div class="app">
     <header class="topbar">
       <div class="brand">
-        <span class="logo">?��</span>
+        <span class="logo">🚩</span>
         <div>
-          <h1>踩地??/h1>
-          <p class="sub">Minesweeper · ?��??�特??/p>
+          <h1>踩地雷</h1>
+          <p class="sub">Minesweeper · 插旗有特效</p>
         </div>
       </div>
-      <button id="sound-toggle" class="icon-btn" title="?��??��?" aria-label="?��??��?">??</button>
+      <button id="sound-toggle" class="icon-btn" title="音效開關" aria-label="音效開關">🔊</button>
     </header>
 
     <div class="hud">
-      <div class="stat" title="?��??�雷">
-        <span class="stat-icon">?��</span>
+      <div class="stat" title="剩餘地雷">
+        <span class="stat-icon">💣</span>
         <span id="mine-count" class="stat-value">10</span>
       </div>
-      <div class="stat" title="經�??��?">
-        <span class="stat-icon">?��?</span>
+      <div class="stat" title="經過時間">
+        <span class="stat-icon">⏱️</span>
         <span id="timer" class="stat-value">000</span>
       </div>
       <div class="controls">
-        <select id="difficulty" aria-label="??��">
-          <option value="beginner">?��? 9?9</option>
-          <option value="intermediate">中�? 16?16</option>
-          <option value="expert">高�? 30?16</option>
+        <select id="difficulty" aria-label="難度">
+          <option value="beginner">初級 9×9</option>
+          <option value="intermediate">中級 16×16</option>
+          <option value="expert">高級 30×16</option>
         </select>
-        <button id="flag-mode" class="ghost-btn" title="?��?模�?（適?�觸?��?">?�� ?��?模�?</button>
-        <button id="hint" class="ghost-btn" title="?�示：隨機翻?��??��??�格">?�� ?�示 <span id="hint-count">1</span></button>
-        <button id="new-game" class="primary-btn">?��???/button>
+        <button id="flag-mode" class="ghost-btn" title="插旗模式（適合觸控）">🚩 插旗模式</button>
+        <button id="hint" class="ghost-btn" title="提示：隨機翻開一個安全格">💡 提示 <span id="hint-count">1</span></button>
+        <button id="new-game" class="primary-btn">新遊戲</button>
       </div>
     </div>
 
-    <p class="hint">左鍵翻�? · ?�鍵?��? · ?��?（�?機�?也可?��?</p>
+    <p class="hint">左鍵翻開 · 右鍵插旗 · 長按（手機）也可插旗</p>
 
     <div class="board-wrap">
-      <div id="board" class="board" role="grid" aria-label="?�戲?�面"></div>
+      <div id="board" class="board" role="grid" aria-label="遊戲盤面"></div>
       <div id="overlay" class="overlay hidden">
         <div class="panel">
-          <div id="overlay-emoji" class="overlay-emoji">??</div>
-          <h2 id="overlay-title">?�戲結�?</h2>
+          <div id="overlay-emoji" class="overlay-emoji">🙂</div>
+          <h2 id="overlay-title">遊戲結束</h2>
           <p id="overlay-text"></p>
-          <button id="play-again" class="primary-btn">?�玩一�?/button>
+          <button id="play-again" class="primary-btn">再玩一次</button>
         </div>
       </div>
     </div>
 
     <footer class="statusbar">
-      <span id="status">?�「新?�戲?��?�?/span>
+      <span id="status">按「新遊戲」開始</span>
     </footer>
   </div>
 
   <div id="fx" class="fx-layer" aria-hidden="true"></div>
 
-  <script src="game.js?v=5"></script>
+  <script src="game.js?v=6"></script>
 </body>
 </html>
