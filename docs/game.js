@@ -249,6 +249,7 @@ function win() {
   }
   updateHud();
   fireworks();
+  danceDog();
   if (soundOn) sfxWin();
   showOverlay("🎉", "恭喜過關！", `用時 ${game.seconds} 秒`, true);
 }
@@ -381,57 +382,192 @@ function explosion(x, y) {
   spawnRing(x, y, "#ef4444", 70);
 }
 
+const FIREWORK_PALETTES = [
+  ["#fbbf24", "#fde68a", "#ffffff"],
+  ["#34d399", "#a7f3d0", "#ffffff"],
+  ["#60a5fa", "#bfdbfe", "#ffffff"],
+  ["#f472b6", "#fbcfe8", "#ffffff"],
+  ["#f87171", "#fecaca", "#ffffff"],
+  ["#c084fc", "#e9d5ff", "#ffffff"],
+  ["#2dd4bf", "#99f6e4", "#ffffff"]
+];
+
 function fireworks() {
-  const palettes = [
-    ["#fbbf24", "#fde68a", "#ffffff"],
-    ["#34d399", "#a7f3d0", "#ffffff"],
-    ["#60a5fa", "#bfdbfe", "#ffffff"],
-    ["#f472b6", "#fbcfe8", "#ffffff"],
-    ["#f87171", "#fecaca", "#ffffff"]
-  ];
-  const total = 9;
+  const total = 20;
   for (let i = 0; i < total; i++) {
-    setTimeout(() => launchRocket(palettes[i % palettes.length]), i * 300);
+    setTimeout(() => {
+      launchRocket(FIREWORK_PALETTES[i % FIREWORK_PALETTES.length]);
+      if (i % 4 === 1) launchRocket(FIREWORK_PALETTES[(i + 3) % FIREWORK_PALETTES.length]);
+    }, i * 250);
   }
 }
 
 function launchRocket(colors) {
-  const x = window.innerWidth * (0.12 + Math.random() * 0.76);
-  const targetY = window.innerHeight * (0.14 + Math.random() * 0.3);
+  const x = window.innerWidth * (0.08 + Math.random() * 0.84);
+  const targetY = window.innerHeight * (0.1 + Math.random() * 0.32);
   const startY = window.innerHeight + 20;
   const rocket = document.createElement("span");
   rocket.className = "rocket";
   rocket.style.left = x + "px";
   rocket.style.top = startY + "px";
   fxLayer.appendChild(rocket);
+
+  const trail = setInterval(() => {
+    const r = rocket.getBoundingClientRect();
+    spawnTrail(r.left + r.width / 2, r.top);
+  }, 42);
+
   rocket
     .animate(
       [
-        { transform: "translate(-50%, -50%) translateY(0)", opacity: 1 },
-        { transform: `translate(-50%, -50%) translateY(${targetY - startY}px)`, opacity: 1 }
+        { transform: "translate(-50%, -50%) translateY(0) scale(1)", opacity: 1 },
+        { transform: `translate(-50%, -50%) translateY(${(targetY - startY) * 0.6}px) scale(1.25)`, opacity: 1, offset: 0.6 },
+        { transform: `translate(-50%, -50%) translateY(${targetY - startY}px) scale(0.7)`, opacity: 1 }
       ],
-      { duration: 620 + Math.random() * 240, easing: "cubic-bezier(0.25, 0.4, 0.6, 1)" }
+      { duration: 600 + Math.random() * 260, easing: "cubic-bezier(0.3, 0.5, 0.7, 1)" }
     )
     .onfinish = () => {
+    clearInterval(trail);
     rocket.remove();
     fireworkBurst(x, targetY, colors);
-    if (soundOn) tone(180 + Math.random() * 120, 0.34, "sine", 0.1, 60);
   };
 }
 
+function spawnTrail(x, y) {
+  const t = document.createElement("span");
+  t.className = "trail";
+  t.style.left = x + "px";
+  t.style.top = y + "px";
+  fxLayer.appendChild(t);
+  t.animate(
+    [
+      { transform: "translate(-50%, -50%) scale(1)", opacity: 0.95 },
+      { transform: "translate(-50%, -50%) scale(0.15)", opacity: 0 }
+    ],
+    { duration: 460, easing: "ease-out" }
+  ).onfinish = () => t.remove();
+}
+
+function glow(x, y, color) {
+  const g = document.createElement("span");
+  g.className = "glow";
+  g.style.left = x + "px";
+  g.style.top = y + "px";
+  g.style.background = `radial-gradient(circle, ${color}, transparent 70%)`;
+  fxLayer.appendChild(g);
+  g.animate(
+    [
+      { transform: "translate(-50%, -50%) scale(0.2)", opacity: 0.9 },
+      { transform: "translate(-50%, -50%) scale(1.7)", opacity: 0 }
+    ],
+    { duration: 560, easing: "ease-out" }
+  ).onfinish = () => g.remove();
+}
+
+function burstRadial(x, y, colors, count, spread, gravity, duration) {
+  spawnParticles({ x, y, count, colors, spread, size: [3, 9], gravity, duration });
+}
+
+function burstRing(x, y, colors, count, radius) {
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement("span");
+    p.className = "particle";
+    const s = 4 + Math.random() * 4;
+    p.style.width = s + "px";
+    p.style.height = s + "px";
+    const color = colors[i % colors.length];
+    p.style.background = color;
+    p.style.color = color;
+    p.style.left = x + "px";
+    p.style.top = y + "px";
+    fxLayer.appendChild(p);
+    const ang = (Math.PI * 2 * i) / count;
+    const dx = Math.cos(ang) * radius;
+    const dy = Math.sin(ang) * radius;
+    p.animate(
+      [
+        { transform: "translate(-50%, -50%) scale(1)", opacity: 1 },
+        { transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px) scale(0.35)`, opacity: 0 }
+      ],
+      { duration: 1050, easing: "cubic-bezier(0.15, 0.7, 0.3, 1)" }
+    ).onfinish = () => p.remove();
+  }
+}
+
 function fireworkBurst(x, y, colors) {
-  spawnParticles({
-    x,
-    y,
-    count: 48,
-    colors,
-    spread: 135,
-    size: [3, 8],
-    gravity: 95,
-    duration: 1150
-  });
-  spawnRing(x, y, colors[0], 0);
-  spawnRing(x, y, colors[1], 90);
+  const type = Math.random();
+  if (type < 0.3) {
+    burstRadial(x, y, colors, 58, 155, 95, 1100);
+    spawnRing(x, y, colors[0], 0);
+    spawnRing(x, y, colors[1], 90);
+  } else if (type < 0.55) {
+    burstRing(x, y, colors, 42, 150);
+    spawnRing(x, y, colors[1], 60);
+  } else if (type < 0.78) {
+    burstRadial(x, y, colors, 50, 105, 210, 1750);
+    burstRadial(x, y, ["#ffffff"], 12, 55, 60, 900);
+  } else {
+    burstRadial(x, y, [colors[0], colors[1]], 32, 95, 85, 950);
+    setTimeout(() => burstRadial(x, y, [colors[2], "#ffffff"], 30, 175, 110, 1150), 150);
+  }
+  spawnParticles({ x, y, count: 22, colors: ["#ffffff", "#fde68a"], spread: 70, size: [2, 5], gravity: 45, duration: 1500 });
+  glow(x, y, colors[0]);
+  if (soundOn) {
+    tone(150 + Math.random() * 130, 0.34, "sine", 0.1, 55);
+    setTimeout(() => tone(900 + Math.random() * 500, 0.14, "square", 0.03, 300), 60);
+  }
+}
+
+function danceDog() {
+  const actor = document.createElement("span");
+  actor.className = "dog-actor";
+  const dog = document.createElement("span");
+  dog.className = "dog";
+  dog.textContent = "🐕";
+  actor.appendChild(dog);
+  fxLayer.appendChild(actor);
+
+  const w = window.innerWidth;
+  const startX = w + 100;
+  const endX = -140;
+  const duration = 8200;
+
+  const notes = setInterval(() => {
+    const r = actor.getBoundingClientRect();
+    if (r.width) spawnNote(r.left + r.width / 2, r.top + r.height * 0.2);
+  }, 380);
+
+  actor
+    .animate(
+      [
+        { transform: `translateX(${startX}px)`, opacity: 1, offset: 0 },
+        { transform: `translateX(${startX + (endX - startX) * 0.8}px)`, opacity: 1, offset: 0.8 },
+        { transform: `translateX(${endX}px)`, opacity: 0 }
+      ],
+      { duration, easing: "linear", fill: "forwards" }
+    )
+    .onfinish = () => {
+    clearInterval(notes);
+    actor.remove();
+  };
+}
+
+function spawnNote(x, y) {
+  const note = document.createElement("span");
+  note.className = "note";
+  note.textContent = ["♪", "♫", "♩", "✨", "🎵"][(Math.random() * 5) | 0];
+  note.style.left = x + "px";
+  note.style.top = y + "px";
+  fxLayer.appendChild(note);
+  const drift = Math.random() * 70 - 35;
+  note.animate(
+    [
+      { transform: "translate(-50%, -50%) scale(0.4) rotate(-12deg)", opacity: 0 },
+      { transform: `translate(calc(-50% + ${drift * 0.5}px), -70px) scale(1.2) rotate(10deg)`, opacity: 1, offset: 0.35 },
+      { transform: `translate(calc(-50% + ${drift}px), -150px) scale(0.8) rotate(-8deg)`, opacity: 0 }
+    ],
+    { duration: 1150, easing: "ease-out" }
+  ).onfinish = () => note.remove();
 }
 
 function hint() {

@@ -320,6 +320,56 @@ button:active { transform: translateY(0) scale(0.97); }
   pointer-events: none;
 }
 
+.trail {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 9px 3px rgba(251, 191, 36, 0.8);
+  pointer-events: none;
+}
+
+.glow {
+  position: fixed;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.dog-actor {
+  position: fixed;
+  bottom: 7%;
+  left: 0;
+  font-size: 66px;
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 12px rgba(0, 0, 0, 0.5));
+  will-change: transform, opacity;
+}
+
+.dog {
+  display: inline-block;
+  animation: dogDance 0.52s ease-in-out infinite;
+}
+
+@keyframes dogDance {
+  0%, 100% { transform: translateY(0) rotate(-10deg) scale(1); }
+  25% { transform: translateY(-18px) rotate(8deg) scale(1.08); }
+  50% { transform: translateY(0) rotate(10deg) scale(1); }
+  75% { transform: translateY(-13px) rotate(-7deg) scale(1.06); }
+}
+
+.note {
+  position: fixed;
+  font-size: 24px;
+  color: #fde68a;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
+  pointer-events: none;
+}
+
 .cell.hint-reveal {
   animation: hintPulse 0.9s ease-out;
 }
