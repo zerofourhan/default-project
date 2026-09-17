@@ -14,10 +14,10 @@ foreach ($tool in $tools) {
     }
 }
 
-# Python venv
+# Python venv (use py launcher; 'python' may be a Windows Store alias)
 if (-not (Test-Path ".venv")) {
     Write-Host "Creating Python virtual environment..." -ForegroundColor Yellow
-    python -m venv .venv
+    py -m venv .venv
 }
 
 # Node modules
