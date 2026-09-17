@@ -310,6 +310,32 @@ button:active { transform: translateY(0) scale(0.97); }
   pointer-events: none;
 }
 
+.rocket {
+  position: fixed;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 10px 2px #fbbf24, 0 0 24px 8px rgba(251, 191, 36, 0.55);
+  pointer-events: none;
+}
+
+.cell.hint-reveal {
+  animation: hintPulse 0.9s ease-out;
+}
+
+@keyframes hintPulse {
+  0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.9), inset 0 0 0 1px rgba(148, 163, 184, 0.12); }
+  100% { box-shadow: 0 0 0 16px rgba(251, 191, 36, 0), inset 0 0 0 1px rgba(148, 163, 184, 0.12); }
+}
+
+button:disabled,
+select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
 @media (max-width: 720px) {
   :root { --cell: 30px; }
   h1 { font-size: 22px; }

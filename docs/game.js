@@ -1,7 +1,7 @@
 const DIFFICULTIES = {
-  beginner: { cols: 9, rows: 9, mines: 10 },
-  intermediate: { cols: 16, rows: 16, mines: 40 },
-  expert: { cols: 30, rows: 16, mines: 99 }
+  beginner: { cols: 9, rows: 9, mines: 10, hints: 1 },
+  intermediate: { cols: 16, rows: 16, mines: 40, hints: 2 },
+  expert: { cols: 30, rows: 16, mines: 99, hints: 3 }
 };
 
 const NUMBER_COLORS = {
@@ -25,6 +25,8 @@ const overlayTitleEl = document.getElementById("overlay-title");
 const overlayTextEl = document.getElementById("overlay-text");
 const difficultyEl = document.getElementById("difficulty");
 const flagModeBtn = document.getElementById("flag-mode");
+const hintBtn = document.getElementById("hint");
+const hintCountEl = document.getElementById("hint-count");
 const soundBtn = document.getElementById("sound-toggle");
 const newGameBtn = document.getElementById("new-game");
 const playAgainBtn = document.getElementById("play-again");
@@ -53,7 +55,7 @@ function neighbors(r, c, fn) {
 }
 
 function newGame() {
-  const { cols, rows, mines } = currentConfig();
+  const { cols, rows, mines, hints } = currentConfig();
   stopTimer();
   game = {
     cols,
@@ -61,6 +63,7 @@ function newGame() {
     mines,
     flags: 0,
     revealed: 0,
+    hintsLeft: hints,
     firstMove: true,
     over: false,
     won: false,
@@ -209,6 +212,8 @@ function toggleFlag(r, c) {
 function updateHud() {
   mineCountEl.textContent = String(Math.max(0, game.mines - game.flags)).padStart(2, "0");
   timerEl.textContent = String(Math.min(999, game.seconds)).padStart(3, "0");
+  hintCountEl.textContent = String(game.hintsLeft);
+  hintBtn.disabled = game.hintsLeft <= 0 || game.over || game.won;
 }
 
 function startTimer() {
@@ -243,7 +248,7 @@ function win() {
     }
   }
   updateHud();
-  confetti();
+  fireworks();
   if (soundOn) sfxWin();
   showOverlay("🎉", "恭喜過關！", `用時 ${game.seconds} 秒`, true);
 }
@@ -376,22 +381,120 @@ function explosion(x, y) {
   spawnRing(x, y, "#ef4444", 70);
 }
 
-function confetti() {
-  const colors = ["#fbbf24", "#34d399", "#60a5fa", "#f472b6", "#f87171", "#ffffff"];
-  let i = 0;
-  const burst = setInterval(() => {
-    spawnParticles({
-      x: Math.random() * window.innerWidth,
-      y: window.innerHeight * (0.15 + Math.random() * 0.3),
-      count: 16,
-      colors,
-      spread: 70,
-      size: [4, 9],
-      gravity: 220,
-      duration: 1200
+function fireworks() {
+  const palettes = [
+    ["#fbbf24", "#fde68a", "#ffffff"],
+    ["#34d399", "#a7f3d0", "#ffffff"],
+    ["#60a5fa", "#bfdbfe", "#ffffff"],
+    ["#f472b6", "#fbcfe8", "#ffffff"],
+    ["#f87171", "#fecaca", "#ffffff"]
+  ];
+  const total = 9;
+  for (let i = 0; i < total; i++) {
+    setTimeout(() => launchRocket(palettes[i % palettes.length]), i * 300);
+  }
+}
+
+function launchRocket(colors) {
+  const x = window.innerWidth * (0.12 + Math.random() * 0.76);
+  const targetY = window.innerHeight * (0.14 + Math.random() * 0.3);
+  const startY = window.innerHeight + 20;
+  const rocket = document.createElement("span");
+  rocket.className = "rocket";
+  rocket.style.left = x + "px";
+  rocket.style.top = startY + "px";
+  fxLayer.appendChild(rocket);
+  rocket
+    .animate(
+      [
+        { transform: "translate(-50%, -50%) translateY(0)", opacity: 1 },
+        { transform: `translate(-50%, -50%) translateY(${targetY - startY}px)`, opacity: 1 }
+      ],
+      { duration: 620 + Math.random() * 240, easing: "cubic-bezier(0.25, 0.4, 0.6, 1)" }
+    )
+    .onfinish = () => {
+    rocket.remove();
+    fireworkBurst(x, targetY, colors);
+    if (soundOn) tone(180 + Math.random() * 120, 0.34, "sine", 0.1, 60);
+  };
+}
+
+function fireworkBurst(x, y, colors) {
+  spawnParticles({
+    x,
+    y,
+    count: 48,
+    colors,
+    spread: 135,
+    size: [3, 8],
+    gravity: 95,
+    duration: 1150
+  });
+  spawnRing(x, y, colors[0], 0);
+  spawnRing(x, y, colors[1], 90);
+}
+
+function hint() {
+  if (!game || game.over || game.won) return;
+  if (game.hintsLeft <= 0) {
+    statusEl.textContent = "提示已經用完了";
+    return;
+  }
+
+  const candidates = [];
+  for (let r = 0; r < game.rows; r++) {
+    for (let c = 0; c < game.cols; c++) {
+      const cell = grid[r][c];
+      if (cell.revealed || cell.flagged) continue;
+      if (!game.firstMove && cell.mine) continue;
+      candidates.push(cell);
+    }
+  }
+  if (!candidates.length) {
+    statusEl.textContent = "沒有可提示的格子";
+    return;
+  }
+
+  let pool = candidates;
+  if (!game.firstMove) {
+    const frontier = candidates.filter((cell) => {
+      let touch = false;
+      neighbors(cell.r, cell.c, (nr, nc) => {
+        if (grid[nr][nc].revealed) touch = true;
+      });
+      return touch;
     });
-    if (++i >= 6) clearInterval(burst);
-  }, 130);
+    if (frontier.length) pool = frontier;
+  }
+  const pick = pool[(Math.random() * pool.length) | 0];
+
+  if (game.firstMove) {
+    placeMines(pick.r, pick.c);
+    game.firstMove = false;
+    startTimer();
+  }
+
+  game.hintsLeft--;
+  floodReveal(pick.r, pick.c);
+  pick.el.classList.add("hint-reveal");
+  const rect = pick.el.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+  spawnRing(x, y, "#fbbf24", 0);
+  spawnParticles({
+    x,
+    y,
+    count: 14,
+    colors: ["#fbbf24", "#fde68a", "#ffffff"],
+    spread: 50,
+    size: [3, 7],
+    gravity: 15,
+    duration: 560
+  });
+  if (soundOn) tone(880, 0.18, "sine", 0.12, 1320);
+  statusEl.textContent = `提示：已翻開一格（剩 ${game.hintsLeft} 次）`;
+  updateHud();
+  checkWin();
 }
 
 function ensureAudio() {
@@ -492,6 +595,7 @@ soundBtn.addEventListener("click", () => {
 });
 
 difficultyEl.addEventListener("change", newGame);
+hintBtn.addEventListener("click", hint);
 newGameBtn.addEventListener("click", newGame);
 playAgainBtn.addEventListener("click", newGame);
 
