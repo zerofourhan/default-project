@@ -1,69 +1,54 @@
-# Default Project
+# 踩地雷 Minesweeper
 
-## Quick Start
+經典踩地雷網頁遊戲，插旗時有粒子爆裂、漣漪與音效特效。
 
-```bash
-# Install dependencies
-npm install
-pip install -r requirements.txt
+**線上遊玩：** https://zerofourhan.github.io/default-project/
 
-# Set up environment
-cp .env.example .env
+## 玩法
 
-# Run development server
-npm run dev
-py -m src.main
-```
+- **左鍵**：翻開格子
+- **右鍵**：插旗 / 取消插旗
+- **長按（手機）**：插旗
+- 也可開啟「🚩 插旗模式」，用單擊插旗
 
-## Project Structure
+第一次點擊一定安全，不會踩到地雷。
 
-```
-.
-├── src/                # Source code
-│   ├── api/            # API endpoints
-│   ├── models/         # Data models
-│   ├── services/       # Business logic
-│   ├── utils/          # Utilities
-│   └── config/         # Configuration
-├── tests/              # Tests
-│   ├── unit/           # Unit tests
-│   └── integration/    # Integration tests
-├── docs/               # Documentation
-├── scripts/            # Build & utility scripts
-└── .github/workflows/  # CI/CD pipelines
-```
+## 功能
 
-## Development
+- 三種難度：初級 9×9、中級 16×16、高級 30×16
+- 插旗特效：粒子爆裂 + 雙層漣漪 + 旗幟彈跳 + 音效
+- 首次點擊保護、空白區域自動展開
+- 計時器、剩餘地雷計數
+- 支援滑鼠與觸控（長按插旗）
+- 音效開關
 
-### Prerequisites
-- Node.js >= 20
-- Python >= 3.11
-- Git
+## 本地執行
 
-### Environment Variables
+直接用瀏覽器開啟 `docs/index.html` 即可，無需建置。
 
-Copy `.env.example` to `.env` and fill in the values.
-
-### Testing
+或啟動本地伺服器：
 
 ```bash
-# Python tests
-pytest tests/
-
-# Node.js tests
-npm test
+py -m http.server 8000 --directory docs
 ```
 
-### Linting
+然後開啟 http://localhost:8000
 
-```bash
-# Python
-ruff check src/
-mypy src/
+## 專案結構
 
-# Node.js
-npm run lint
 ```
+docs/            # 遊戲本體（GitHub Pages 發布來源）
+├── index.html
+├── style.css
+├── game.js
+└── favicon.svg
+src/             # 其他程式碼（Python / Node 骨架）
+tests/
+```
+
+## 部署
+
+本專案透過 **GitHub Pages** 發布，來源為 `main` 分支的 `/docs` 目錄。推送到 `main` 後會自動重新建置。
 
 ## License
 
