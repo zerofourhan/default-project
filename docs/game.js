@@ -212,8 +212,8 @@ function toggleFlag(r, c) {
 function updateHud() {
   mineCountEl.textContent = String(Math.max(0, game.mines - game.flags)).padStart(2, "0");
   timerEl.textContent = String(Math.min(999, game.seconds)).padStart(3, "0");
-  hintCountEl.textContent = String(game.hintsLeft);
-  hintBtn.disabled = game.hintsLeft <= 0 || game.over || game.won;
+  if (hintCountEl) hintCountEl.textContent = String(game.hintsLeft);
+  if (hintBtn) hintBtn.disabled = game.hintsLeft <= 0 || game.over || game.won;
 }
 
 function startTimer() {
@@ -731,7 +731,7 @@ soundBtn.addEventListener("click", () => {
 });
 
 difficultyEl.addEventListener("change", newGame);
-hintBtn.addEventListener("click", hint);
+if (hintBtn) hintBtn.addEventListener("click", hint);
 newGameBtn.addEventListener("click", newGame);
 playAgainBtn.addEventListener("click", newGame);
 
