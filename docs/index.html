@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>踩地雷 Minesweeper</title>
+  <meta name="description" content="經典踩地雷遊戲，插旗時有絢麗的粒子特效。" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">🚩</span>
+        <div>
+          <h1>踩地雷</h1>
+          <p class="sub">Minesweeper · 插旗有特效</p>
+        </div>
+      </div>
+      <button id="sound-toggle" class="icon-btn" title="音效開關" aria-label="音效開關">🔊</button>
+    </header>
+
+    <div class="hud">
+      <div class="stat" title="剩餘地雷">
+        <span class="stat-icon">💣</span>
+        <span id="mine-count" class="stat-value">10</span>
+      </div>
+      <div class="stat" title="經過時間">
+        <span class="stat-icon">⏱️</span>
+        <span id="timer" class="stat-value">000</span>
+      </div>
+      <div class="controls">
+        <select id="difficulty" aria-label="難度">
+          <option value="beginner">初級 9×9</option>
+          <option value="intermediate">中級 16×16</option>
+          <option value="expert">高級 30×16</option>
+        </select>
+        <button id="flag-mode" class="ghost-btn" title="插旗模式（適合觸控）">🚩 插旗模式</button>
+        <button id="new-game" class="primary-btn">新遊戲</button>
+      </div>
+    </div>
+
+    <p class="hint">左鍵翻開 · 右鍵插旗 · 長按（手機）也可插旗</p>
+
+    <div class="board-wrap">
+      <div id="board" class="board" role="grid" aria-label="遊戲盤面"></div>
+      <div id="overlay" class="overlay hidden">
+        <div class="panel">
+          <div id="overlay-emoji" class="overlay-emoji">🙂</div>
+          <h2 id="overlay-title">遊戲結束</h2>
+          <p id="overlay-text"></p>
+          <button id="play-again" class="primary-btn">再玩一次</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="statusbar">
+      <span id="status">按「新遊戲」開始</span>
+    </footer>
+  </div>
+
+  <div id="fx" class="fx-layer" aria-hidden="true"></div>
+
+  <script src="game.js"></script>
+</body>
+</html>
