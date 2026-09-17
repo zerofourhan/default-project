@@ -25,6 +25,8 @@ const overlayTitleEl = document.getElementById("overlay-title");
 const overlayTextEl = document.getElementById("overlay-text");
 const difficultyEl = document.getElementById("difficulty");
 const flagModeBtn = document.getElementById("flag-mode");
+const modeDigBtn = document.getElementById("mode-dig");
+const modeFlagBtn = document.getElementById("mode-flag");
 const hintBtn = document.getElementById("hint");
 const hintCountEl = document.getElementById("hint-count");
 const soundBtn = document.getElementById("sound-toggle");
@@ -717,16 +719,29 @@ boardEl.addEventListener("contextmenu", (e) => {
 
 let pressTimer = null;
 let suppressClick = false;
+let pressX = 0;
+let pressY = 0;
 
 boardEl.addEventListener("pointerdown", (e) => {
   const el = e.target.closest(".cell");
   if (!el || e.button !== 0) return;
   suppressClick = false;
+  pressX = e.clientX;
+  pressY = e.clientY;
   pressTimer = setTimeout(() => {
+    pressTimer = null;
     suppressClick = true;
     toggleFlag(Number(el.dataset.r), Number(el.dataset.c));
-    if (navigator.vibrate) navigator.vibrate(18);
-  }, 420);
+    if (typeof navigator.vibrate === "function") navigator.vibrate(18);
+  }, 280);
+});
+
+boardEl.addEventListener("pointermove", (e) => {
+  if (!pressTimer) return;
+  if (Math.abs(e.clientX - pressX) > 10 || Math.abs(e.clientY - pressY) > 10) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  }
 });
 
 ["pointerup", "pointerleave", "pointercancel"].forEach((evt) => {
@@ -736,11 +751,18 @@ boardEl.addEventListener("pointerdown", (e) => {
   });
 });
 
-flagModeBtn.addEventListener("click", () => {
-  flagMode = !flagMode;
-  flagModeBtn.classList.toggle("active", flagMode);
-  statusEl.textContent = flagMode ? "插旗模式：點擊格子即可插旗" : "一般模式：點擊格子翻開";
-});
+function setFlagMode(on) {
+  flagMode = on;
+  if (flagModeBtn) flagModeBtn.classList.toggle("active", on);
+  if (modeDigBtn) modeDigBtn.classList.toggle("active", !on);
+  if (modeFlagBtn) modeFlagBtn.classList.toggle("active", on);
+  statusEl.textContent = on ? "插旗模式：點格子插旗" : "挖開模式：點格子翻開";
+  if (typeof navigator.vibrate === "function") navigator.vibrate(8);
+}
+
+if (flagModeBtn) flagModeBtn.addEventListener("click", () => setFlagMode(!flagMode));
+if (modeDigBtn) modeDigBtn.addEventListener("click", () => setFlagMode(false));
+if (modeFlagBtn) modeFlagBtn.addEventListener("click", () => setFlagMode(true));
 
 soundBtn.addEventListener("click", () => {
   soundOn = !soundOn;

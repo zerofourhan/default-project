@@ -174,6 +174,7 @@ button:active { transform: translateY(0) scale(0.97); }
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   max-width: 100%;
   overflow: auto;
+  touch-action: manipulation;
 }
 
 .board.shake { animation: boardShake 0.5s; }
@@ -203,6 +204,8 @@ button:active { transform: translateY(0) scale(0.97); }
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: transform 0.08s, filter 0.12s;
   will-change: transform;
 }
@@ -470,8 +473,56 @@ select:disabled {
   transform: none;
 }
 
+.mobile-bar {
+  display: none;
+}
+
+.mode-btn {
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(30, 41, 70, 0.92);
+  color: var(--text);
+  padding: 16px 10px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.mode-btn:active { transform: scale(0.97); }
+
+.mode-btn.active {
+  background: linear-gradient(135deg, #fbbf24, #f97316);
+  color: #21160a;
+  border-color: transparent;
+  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.35);
+}
+
+@media (max-width: 860px), (pointer: coarse) {
+  .mobile-bar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    gap: 10px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(9, 14, 28, 0.94);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line);
+    z-index: 50;
+  }
+  .mobile-bar .mode-btn { flex: 1; }
+  body { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+  #flag-mode { display: none; }
+  .hint { display: none; }
+}
+
 @media (max-width: 720px) {
-  :root { --cell: 30px; }
+  :root { --cell: 32px; }
   h1 { font-size: 22px; }
   .controls { margin-left: 0; width: 100%; }
   .controls > * { flex: 1; }
@@ -479,5 +530,5 @@ select:disabled {
 }
 
 @media (max-width: 420px) {
-  :root { --cell: 26px; }
+  :root { --cell: 30px; }
 }
