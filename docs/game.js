@@ -518,13 +518,29 @@ function fireworkBurst(x, y, colors) {
   }
 }
 
+const DOG_SVG = `<svg class="dog-svg" viewBox="0 0 220 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <ellipse cx="108" cy="170" rx="66" ry="8" fill="rgba(0,0,0,0.35)"></ellipse>
+  <g class="dog-wrap">
+    <g class="dog-tail"><path d="M162 78 Q196 64 202 34" fill="none" stroke="#b87b3f" stroke-width="13" stroke-linecap="round"></path></g>
+    <g class="dog-leg dog-leg-1"><rect x="60" y="114" width="18" height="48" rx="9" fill="#b87b3f"></rect></g>
+    <g class="dog-leg dog-leg-2"><rect x="146" y="114" width="18" height="48" rx="9" fill="#b87b3f"></rect></g>
+    <g class="dog-ear"><ellipse cx="54" cy="34" rx="14" ry="21" fill="#a96c33"></ellipse></g>
+    <rect x="48" y="58" width="126" height="70" rx="35" fill="#e6a95f"></rect>
+    <circle cx="50" cy="66" r="37" fill="#e6a95f"></circle>
+    <ellipse cx="18" cy="80" rx="20" ry="15" fill="#f2c78c"></ellipse>
+    <path class="dog-tongue" d="M26 92 q7 15 15 2" fill="none" stroke="#ef7a8a" stroke-width="7" stroke-linecap="round"></path>
+    <circle cx="4" cy="74" r="6" fill="#3b2a1a"></circle>
+    <circle cx="40" cy="54" r="6" fill="#3b2a1a"></circle>
+    <circle cx="42" cy="52" r="2" fill="#ffffff"></circle>
+    <g class="dog-leg dog-leg-3"><rect x="78" y="116" width="18" height="46" rx="9" fill="#f0bc78"></rect></g>
+    <g class="dog-leg dog-leg-4"><rect x="126" y="116" width="18" height="46" rx="9" fill="#f0bc78"></rect></g>
+  </g>
+</svg>`;
+
 function danceDog() {
   const actor = document.createElement("span");
   actor.className = "dog-actor";
-  const dog = document.createElement("span");
-  dog.className = "dog";
-  dog.textContent = "🐕";
-  actor.appendChild(dog);
+  actor.innerHTML = DOG_SVG;
   fxLayer.appendChild(actor);
 
   const w = window.innerWidth;

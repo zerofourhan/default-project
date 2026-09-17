@@ -341,25 +341,79 @@ button:active { transform: translateY(0) scale(0.97); }
 
 .dog-actor {
   position: fixed;
-  bottom: 7%;
+  bottom: 6%;
   left: 0;
-  font-size: 66px;
-  line-height: 1;
+  width: 150px;
   pointer-events: none;
-  filter: drop-shadow(0 12px 12px rgba(0, 0, 0, 0.5));
   will-change: transform, opacity;
 }
 
-.dog {
-  display: inline-block;
-  animation: dogDance 0.52s ease-in-out infinite;
+.dog-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.35));
 }
 
-@keyframes dogDance {
-  0%, 100% { transform: translateY(0) rotate(-10deg) scale(1); }
-  25% { transform: translateY(-18px) rotate(8deg) scale(1.08); }
-  50% { transform: translateY(0) rotate(10deg) scale(1); }
-  75% { transform: translateY(-13px) rotate(-7deg) scale(1.06); }
+.dog-wrap {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: dogBounce 0.55s ease-in-out infinite;
+}
+
+.dog-leg {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  animation: dogLeg 0.55s ease-in-out infinite;
+}
+
+.dog-leg-1 { animation-delay: 0s; }
+.dog-leg-2 { animation-delay: -0.275s; }
+.dog-leg-3 { animation-delay: -0.275s; }
+.dog-leg-4 { animation-delay: 0s; }
+
+.dog-tail {
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+  animation: dogTail 0.3s ease-in-out infinite;
+}
+
+.dog-ear {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  animation: dogEar 0.55s ease-in-out infinite;
+}
+
+.dog-tongue {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  animation: dogTongue 0.55s ease-in-out infinite;
+}
+
+@keyframes dogBounce {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-7px) rotate(3deg); }
+}
+
+@keyframes dogLeg {
+  0%, 100% { transform: rotate(20deg); }
+  50% { transform: rotate(-20deg); }
+}
+
+@keyframes dogTail {
+  0%, 100% { transform: rotate(-26deg); }
+  50% { transform: rotate(26deg); }
+}
+
+@keyframes dogEar {
+  0%, 100% { transform: rotate(-12deg); }
+  50% { transform: rotate(16deg); }
+}
+
+@keyframes dogTongue {
+  0%, 100% { transform: rotate(-10deg) scaleY(1); }
+  50% { transform: rotate(10deg) scaleY(1.15); }
 }
 
 .note {
