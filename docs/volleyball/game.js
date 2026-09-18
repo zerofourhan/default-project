@@ -8,9 +8,13 @@
   var H = canvas.height;
   var GROUND_Y = H - 60;
   var NET_X = W / 2;
+  var NET_H = 230;
+  var NET_TOP = GROUND_Y - NET_H;
   var WIN_SCORE = 15;
   var BALL_R = 16;
-  var GRAVITY = 2000;
+  var GRAVITY = 1600;
+  var DRAG = 0.12;
+  var MOVE_SPEED = 380;
 
   var yourPosId = "spiker";
   var yourMatePosId = "setter";
@@ -28,19 +32,21 @@
 
   function el(id) { return document.getElementById(id); }
 
-  function makeChar(x, posId) {
+  function makeChar(x, posId, side, label) {
     return {
-      x: x, y: GROUND_Y, vx: 0, vy: 0, onGround: true, posId: posId
+      x: x, y: GROUND_Y, vx: 0, vy: 0, onGround: true, posId: posId,
+      side: side, label: label
     };
   }
 
-  var your = makeChar(300, yourPosId);
-  var yourMate = makeChar(170, yourMatePosId);
-  var cpu = makeChar(W - 300, cpuPosId);
-  var cpuMate = makeChar(W - 170, cpuMatePosId);
+  var your = makeChar(300, yourPosId, "player", "你");
+  var yourMate = makeChar(NET_X - 150, yourMatePosId, "player", "隊友");
+  var cpu = makeChar(W - 300, cpuPosId, "cpu", "敵將");
+  var cpuMate = makeChar(NET_X + 150, cpuMatePosId, "cpu", "敵友");
 
   var ball = {
-    x: 0, y: 0, vx: 0, vy: 0, state: "ground", side: null, lastHitter: null, hitCd: 0
+    x: 0, y: 0, vx: 0, vy: 0, state: "ground", side: null,
+    lastHitter: null, hitCd: 0, prevX: 0, spin: 0, rot: 0
   };
 
   var state = "overlay";
@@ -50,6 +56,7 @@
   var rallyTouchesPlayer = 0;
   var rallyTouchesCpu = 0;
   var serveTimer = 0;
+  var servingLock = false;
 
   var startBtn = el("start-btn");
 
@@ -109,39 +116,39 @@
 
   function hideOverlay() { if (el("overlay")) el("overlay").classList.add("hidden"); }
 
+  function launchTo(tx, ty, t) {
+    ball.vx = (tx - ball.x) / t;
+    ball.vy = (ty - ball.y - 0.5 * GRAVITY * t * t) / t;
+  }
+
   function doPlayerServe() {
-    ball.x = your.x;
-    ball.y = GROUND_Y - 120;
-    if (ball.x >= NET_X) { ball.x = NET_X - 60; }
-    ball.vx = rnd(80, 160);
-    ball.vy = -(820 + rnd(0, 60));
+    ball.x = clamp(your.x, 40, NET_X - 260);
+    ball.y = GROUND_Y - 150;
+    ball.vx = rnd(820, 940);
+    ball.vy = -(640 + rnd(0, 90));
     ball.side = "cpu";
     ball.lastHitter = null;
+    ball.spin = 6;
     state = "rally";
     if (el("status")) el("status").textContent = "電腦接發球…";
   }
 
   function doCpuServe() {
-    ball.x = cpu.x;
-    ball.y = GROUND_Y - 120;
-    if (ball.x <= NET_X) { ball.x = NET_X + 60; }
-    ball.vx = -rnd(80, 180);
-    ball.vy = -(860 + rnd(0, 80));
+    ball.x = clamp(cpu.x, NET_X + 260, W - 40);
+    ball.y = GROUND_Y - 150;
+    ball.vx = -rnd(820, 940);
+    ball.vy = -(640 + rnd(0, 90));
     ball.side = "player";
     ball.lastHitter = null;
+    ball.spin = -6;
     state = "rally";
     if (el("status")) el("status").textContent = "快按 Q 接一傳！";
   }
 
   function receiveBall(byPlayer) {
-    var vx;
-    if (byPlayer) {
-      vx = -rnd(50, 120);
-    } else {
-      vx = rnd(20, 80);
-    }
-    ball.vy = -(900 + rnd(0, 60));
-    ball.vx = vx;
+    var tx = byPlayer ? NET_X + rnd(-260, -160) : NET_X + rnd(160, 260);
+    launchTo(tx, GROUND_Y - 460, 0.9);
+    ball.spin = byPlayer ? 4 : -4;
     ball.hitCd = 0.4;
     if (byPlayer) {
       rallyTouchesPlayer++;
@@ -152,30 +159,20 @@
   }
 
   function setBall(byPlayer) {
-    var c = byPlayer ? yourMate : cpuMate;
-    ball.x = c.x;
-    ball.y = GROUND_Y - 420;
-    ball.vy = -(1200 + rnd(0, 100));
-    ball.vx = byPlayer ? rnd(-40, 40) : rnd(-20, 40);
+    var tx = NET_X + (byPlayer ? -60 : 60);
+    launchTo(tx, GROUND_Y - 380, 0.85);
+    ball.spin = byPlayer ? 2 : -2;
     ball.hitCd = 0.45;
     if (byPlayer) rallyTouchesPlayer++;
     else rallyTouchesCpu++;
   }
 
   function spikeBall(byPlayer) {
-    var attacker = byPlayer ? your : cpu;
     var dir = byPlayer ? 1 : -1;
-    if (byPlayer) {
-      attacker.x = clamp(attacker.x, 30, NET_X - 60);
-    } else {
-      attacker.x = clamp(attacker.x, NET_X + 40, NET_X + 70);
-    }
-    if (attacker.x >= NET_X) dir = -1;
-    ball.x = attacker.x;
-    ball.y = attacker.y - 140;
-    ball.vy = byPlayer ? -(950 + rnd(0, 80)) : -(620 + rnd(0, 120));
-    ball.vx = dir * (byPlayer ? rnd(360, 560) : rnd(480, 680));
+    var base = NET_X + dir * rnd(60, 90);
+    launchTo(base + dir * rnd(120, 380), GROUND_Y, 0.55);
     ball.hitCd = 0.5;
+    ball.spin = dir * 8;
     if (byPlayer) rallyTouchesPlayer++;
     else rallyTouchesCpu++;
   }
@@ -183,25 +180,32 @@
   function near(a, b) {
     var dx = Math.abs(a.x - b.x);
     var dy = Math.abs(a.y - b.y);
-    return dx < 150 && dy < 300;
+    return dx < 160 && dy < 460;
   }
 
   function tryPlayerAction() {
     if (state !== "rally") return;
-    var jumpKey = keys[" "] || keys["ArrowUp"] || keys["w"] || keys["W"] || touchDown["btn-jump"];
-    var hitKey = keys["e"] || keys["E"] || touchDown["btn-hit"];
-    var recvKey = keys["q"] || keys["Q"] || touchDown["btn-receive"];
 
-    if (jumpKey && your.onGround) {
+    var left = keys["ArrowLeft"] || keys["a"] || keys["A"] || touchDown["btn-left"];
+    var right = keys["ArrowRight"] || keys["d"] || keys["D"] || touchDown["btn-right"];
+    var jumpKey = keys[" "] || keys["ArrowUp"] || keys["w"] || keys["W"] || touchDown["btn-jump"];
+    var hitKey = (keys["e"] || keys["E"] || touchDown["btn-hit"]) && !servingLock;
+    var recvKey = (keys["q"] || keys["Q"] || touchDown["btn-receive"]) && !servingLock;
+
+    if (left) your.x -= MOVE_SPEED * DT;
+    if (right) your.x += MOVE_SPEED * DT;
+    your.x = clamp(your.x, 40, NET_X - 40);
+
+    if (your.onGround && jumpKey) {
       your.vy = -900;
       your.onGround = false;
     }
 
-    if (recvKey && rallyTouchesPlayer === 0 && near(your, ball)) {
+    if (recvKey && rallyTouchesPlayer === 0 && ball.x < NET_X + 60 && near(your, ball)) {
       receiveBall(true);
-    } else if (hitKey && rallyTouchesPlayer === 1 && yourPosId === "setter" && near(yourMate, ball)) {
+    } else if (hitKey && rallyTouchesPlayer === 1 && ball.x < NET_X + 60 && near(your, ball)) {
       setBall(true);
-    } else if (hitKey && rallyTouchesPlayer === 2 && yourPosId !== "setter" && near(your, ball)) {
+    } else if (hitKey && rallyTouchesPlayer === 2 && ball.x < NET_X + 60 && near(your, ball)) {
       spikeBall(true);
     }
   }
@@ -250,31 +254,49 @@
   function nearCpu(a, b) {
     var dx = Math.abs(a.x - b.x);
     var dy = Math.abs(a.y - b.y);
-    return dx < 200 && dy < 400;
+    return dx < 210 && dy < 540;
   }
 
   function stepPhysics() {
     if (state !== "rally") return;
+    ball.prevX = ball.x;
     ball.x += ball.vx * DT;
+    ball.vx *= Math.max(0, 1 - DRAG * DT);
     ball.vy += GRAVITY * DT;
     ball.y += ball.vy * DT;
 
     if (ball.y < 40) { ball.y = 40; ball.vy = Math.abs(ball.vy) * 0.6; }
 
-    ball.side = ball.x < NET_X ? "player" : "cpu";
+    var crossed = (ball.prevX <= NET_X && ball.x > NET_X) || (ball.prevX >= NET_X && ball.x < NET_X);
+    if (crossed && ball.y > NET_TOP - 6) {
+      ball.x = NET_X + (ball.x > NET_X ? 1 : -1) * (BALL_R + 4);
+      ball.vx = -ball.vx * 0.3;
+      ball.vy = -Math.abs(ball.vy) * 0.5;
+      ball.side = ball.x < NET_X ? "player" : "cpu";
+    } else {
+      ball.side = ball.x < NET_X ? "player" : "cpu";
+    }
+
+    ball.rot += ball.spin * DT;
 
     if (ball.y > GROUND_Y - 6) {
       ball.y = GROUND_Y;
       ball.vy = 0;
+      ball.vx = 0;
       groundDecision();
     }
   }
 
   function stepMates() {
-    yourMate.x = your.x - 140;
-    yourMate.x = clamp(yourMate.x, 30, NET_X - 40);
-    cpuMate.x = cpu.x + 100;
-    cpuMate.x = clamp(cpuMate.x, NET_X + 40, W - 30);
+    if (yourMate && state === "rally") {
+      if (rallyTouchesPlayer === 1) {
+        yourMate.x += (ball.x - yourMate.x) * 0.06;
+      } else if (rallyTouchesPlayer === 2) {
+        yourMate.x += (NET_X - 80 - yourMate.x) * 0.04;
+      }
+    }
+    yourMate.x = clamp(yourMate.x, 60, NET_X - 70);
+    cpuMate.x = clamp(cpuMate.x, NET_X + 70, W - 60);
   }
 
   function stepChar(c) {
@@ -300,46 +322,128 @@
     }
     server = server === "player" ? "cpu" : "player";
     setServe();
-    if (el("status")) el("status").textContent = server === "player" ? "你發球 · 按 空白" : "電腦發球…";
+    if (el("status")) el("status").textContent = server === "player" ? "你發球 · 按 F" : "電腦發球…";
     if (server === "cpu") doCpuServe();
   }
 
   function drawCourt() {
-    ctx.fillStyle = "#dfc893";
+    ctx.fillStyle = "#f2ddb0";
     ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
-    ctx.fillStyle = "#10233f";
+    ctx.fillStyle = "#123c66";
     ctx.fillRect(0, 0, W, GROUND_Y);
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(NET_X, GROUND_Y);
+    ctx.lineTo(NET_X, 0);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(0, GROUND_Y);
+    ctx.lineTo(W, GROUND_Y);
+    ctx.stroke();
   }
 
   function drawNet() {
-    ctx.fillStyle = "#d9d9d9";
-    ctx.fillRect(NET_X - 8, 0, 16, GROUND_Y);
+    var y0 = NET_TOP;
+    ctx.fillStyle = "#26313f";
+    ctx.fillRect(NET_X - 10, y0 - 10, 20, NET_H + 10);
+    ctx.strokeStyle = "rgba(255,255,255,0.28)";
+    ctx.lineWidth = 1;
+    for (var y = y0; y <= GROUND_Y; y += 14) {
+      ctx.beginPath();
+      ctx.moveTo(NET_X - 8, y);
+      ctx.lineTo(NET_X + 8, y);
+      ctx.stroke();
+    }
   }
 
-  function drawChar(c, color) {
-    ctx.fillStyle = color;
-    ctx.fillRect(c.x - 16, c.y - 64, 32, 64);
-    ctx.fillStyle = "#ffe8c2";
+  function teamColor(c) {
+    var side = c.side;
+    var main, dark, edge;
+    if (side === "player") {
+      main = c === your ? "#2f7df6" : "#20b2aa";
+      dark = c === your ? "#1b4fa8" : "#0f8378";
+      edge = "#bfe3ff";
+    } else {
+      main = c === cpu ? "#f0433a" : "#ff8c1a";
+      dark = c === cpu ? "#a51f17" : "#b75e00";
+      edge = "#ffd9d0";
+    }
+    return { main: main, dark: dark, edge: edge };
+  }
+
+  function drawChar(c) {
+    var t = teamColor(c);
+    var headR = 15;
+    var hx = c.x;
+    var vy = c.y - 68;
+    if (t.side === "player") {
+      ctx.fillStyle = t.dark;
+      ctx.fillRect(hx - 18, vy + 8, 36, 62);
+      ctx.fillStyle = t.main;
+      ctx.fillRect(hx - 14, vy + 12, 28, 54);
+    } else {
+      ctx.fillStyle = t.dark;
+      ctx.fillRect(hx - 18, vy + 8, 36, 62);
+      ctx.fillStyle = t.main;
+      ctx.fillRect(hx - 17, vy + 12, 34, 54);
+    }
+    ctx.fillStyle = "#ffe3c0";
     ctx.beginPath();
-    ctx.arc(c.x, c.y - 70, 15, 0, 7);
+    ctx.arc(hx, vy + 10, headR, 0, 7);
     ctx.fill();
+
+    var pos = info(c.posId);
+    ctx.font = "14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(pos.icon, hx, vy - 2);
+
+    ctx.font = "bold 13px sans-serif";
+    ctx.strokeStyle = "rgba(0,0,0,0.55)";
+    ctx.lineWidth = 3;
+    ctx.strokeText(c.label, hx, vy - 18);
+    ctx.fillStyle = t.edge;
+    ctx.fillText(c.label, hx, vy - 18);
+
+    if (c === your) {
+      ctx.strokeStyle = "rgba(255,255,60,0.9)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(hx, c.y - 34, 34, 0, 7);
+      ctx.stroke();
+      ctx.font = "bold 15px sans-serif";
+      ctx.fillStyle = "#fff34f";
+      ctx.fillText("▼", hx, c.y - 92);
+    }
   }
 
   function drawBall() {
+    ctx.save();
+    ctx.translate(ball.x, ball.y);
+    ctx.rotate(ball.rot);
     ctx.fillStyle = "#f9b234";
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, BALL_R, 0, 7);
+    ctx.arc(0, 0, BALL_R, 0, 7);
     ctx.fill();
+    ctx.strokeStyle = "#d98a1f";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-8, -2);
+    ctx.lineTo(8, 2);
+    ctx.stroke();
+    ctx.restore();
   }
 
   function draw() {
     if (!ctx) return;
     drawCourt();
     drawNet();
-    drawChar(your, "#3b82f6");
-    drawChar(yourMate, "#10b981");
-    drawChar(cpu, "#ef4444");
-    drawChar(cpuMate, "#f97316");
+    drawChar(yourMate);
+    drawChar(your);
+    drawChar(cpuMate);
+    drawChar(cpu);
     drawBall();
   }
 
@@ -352,7 +456,7 @@
       stepPhysics();
       stepChar(cpu);
     } else if (state === "serve") {
-      if (server === "player" && (keys[" "] || touchDown["btn-jump"])) {
+      if (server === "player" && (keys["f"] || keys["F"] || touchDown["btn-serve"])) {
         doPlayerServe();
       } else {
         serveTimer++;
@@ -371,7 +475,7 @@
   function init() {
     resetMatch();
     updateHud();
-    showOverlay("沙灘排球 2v2", "選主攻/副攻→搭檔固定舉球；選舉球→搭檔由你選。空白=跳、E=扣/托、Q=接一傳、ESC=菜單", false);
+    showOverlay("沙灘排球 2v2", "方向鍵/A·D 移動 · F 發球 · 空白跳 · Q 接一傳 · E 扣/托 · ESC 選單。主攻⚡副攻🛡️舉球🎯", false);
   }
 
   function tieMate() {
@@ -439,7 +543,8 @@
     var recv = el("btn-receive");
     var left = el("btn-left");
     var right = el("btn-right");
-    var btnList = [jump, hit, recv, left, right];
+    var serve = el("btn-serve");
+    var btnList = [jump, hit, recv, left, right, serve];
     for (var i = 0; i < btnList.length; i++) {
       (function (b) {
         if (b && b.addEventListener) {
