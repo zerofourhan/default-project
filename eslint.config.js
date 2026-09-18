@@ -27,7 +27,9 @@ export default [
         clearTimeout: "readonly",
         setInterval: "readonly",
         clearInterval: "readonly",
-        console: "readonly"
+        console: "readonly",
+        requestAnimationFrame: "readonly",
+        cancelAnimationFrame: "readonly"
       }
     },
     rules: {
