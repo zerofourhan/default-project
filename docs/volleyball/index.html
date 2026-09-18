@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>沙灘排球 Volleyball</title>
+  <meta name="description" content="2D 沙灘排球網頁遊戲，選擇位置對戰電腦。" />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">🏐</span>
+        <div>
+          <h1>沙灘排球</h1>
+          <p class="sub">Volleyball · 選位置 vs 電腦</p>
+        </div>
+      </div>
+      <button id="sound-toggle" class="icon-btn" title="音效開關" aria-label="音效開關">🔊</button>
+    </header>
+
+    <div class="scoreboard">
+      <div class="score you">
+        <span class="score-name">你 · <b id="your-pos">主攻手</b></span>
+        <span id="your-score" class="score-num">0</span>
+      </div>
+      <div id="serve-indicator" class="serve">⬇️ 你發球</div>
+      <div class="score cpu">
+        <span id="cpu-score" class="score-num">0</span>
+        <span class="score-name"><b id="cpu-pos">副攻手</b> · 電腦</span>
+      </div>
+    </div>
+
+    <div class="skillbar">
+      <div class="skill you">
+        <span class="skill-icon" id="your-skill-icon">⚡</span>
+        <div class="skill-info">
+          <span class="skill-name" id="your-skill-name">重錘扣殺</span>
+          <div class="cd"><div class="cd-fill" id="your-cd-fill"></div></div>
+        </div>
+      </div>
+      <span class="skill-vs">VS</span>
+      <div class="skill cpu">
+        <span class="skill-icon" id="cpu-skill-icon">🛡️</span>
+        <div class="skill-info">
+          <span class="skill-name" id="cpu-skill-name">銅牆鐵壁</span>
+          <span class="skill-ready">電腦技能</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <canvas id="game" width="800" height="600"></canvas>
+      <div id="overlay" class="overlay hidden">
+        <div class="panel">
+          <h2 id="overlay-title">沙灘排球</h2>
+          <p id="overlay-text">選擇你要站的位置</p>
+          <div id="pos-grid" class="pos-grid">
+            <button type="button" class="pos-card selected" id="pos-spiker" data-pos="spiker">
+              <span class="pos-icon">⚡</span>
+              <span class="pos-name">主攻手</span>
+              <span class="pos-desc">跳得高、扣得猛</span>
+              <span class="pos-stat">攻擊 ★★★ · 跳躍 ★★★</span>
+              <span class="pos-stat">速度 ★ · 防守 ★★</span>
+              <span class="pos-skill">技能：重錘扣殺</span>
+            </button>
+            <button type="button" class="pos-card" id="pos-setter" data-pos="setter">
+              <span class="pos-icon">🎯</span>
+              <span class="pos-name">舉球員</span>
+              <span class="pos-desc">托球精準、節奏穩定</span>
+              <span class="pos-stat">托球 ★★★ · 精準 ★★★</span>
+              <span class="pos-stat">速度 ★★ · 防守 ★★★</span>
+              <span class="pos-skill">技能：精準托球</span>
+            </button>
+            <button type="button" class="pos-card" id="pos-blocker" data-pos="blocker">
+              <span class="pos-icon">🛡️</span>
+              <span class="pos-name">副攻手</span>
+              <span class="pos-desc">攔網專家、網前核心</span>
+              <span class="pos-stat">攔網 ★★★ · 跳躍 ★★★</span>
+              <span class="pos-stat">攻擊 ★★ · 速度 ★</span>
+              <span class="pos-skill">技能：銅牆鐵壁</span>
+            </button>
+            <button type="button" class="pos-card" id="pos-libero" data-pos="libero">
+              <span class="pos-icon">💠</span>
+              <span class="pos-name">自由球員</span>
+              <span class="pos-desc">速度之王、救球專家</span>
+              <span class="pos-stat">速度 ★★★ · 防守 ★★★</span>
+              <span class="pos-stat">攻擊 ★ · 跳躍 ★★</span>
+              <span class="pos-skill">技能：魚躍救球</span>
+            </button>
+          </div>
+          <p class="hint-line">電腦將隨機選一個位置與你對戰</p>
+          <button id="start-btn" class="primary-btn">開始遊戲</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="touch-bar">
+      <div class="touch-group">
+        <button type="button" class="touch-btn" id="btn-left" aria-label="向左">◀</button>
+        <button type="button" class="touch-btn" id="btn-right" aria-label="向右">▶</button>
+        <button type="button" class="touch-btn jump" id="btn-jump" aria-label="跳躍">⤒</button>
+        <button type="button" class="touch-btn skill" id="btn-skill" aria-label="技能">🔮</button>
+      </div>
+    </div>
+
+    <footer class="statusbar">
+      <span id="status">← → 移動 · ↑/Space 跳躍（碰到球自動打出）</span>
+    </footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
