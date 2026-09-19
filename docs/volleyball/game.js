@@ -12,8 +12,8 @@
   var NET_TOP = GROUND_Y - NET_H;
   var WIN_SCORE = 15;
   var BALL_R = 16;
-  var GRAVITY = 1600;
-  var DRAG = 0.12;
+  var GRAVITY = 1300;
+  var DRAG = 0.2;
   var MOVE_SPEED = 380;
 
   var yourPosId = "spiker";
@@ -124,11 +124,11 @@
   function doPlayerServe() {
     ball.x = clamp(your.x, 40, NET_X - 260);
     ball.y = GROUND_Y - 150;
-    ball.vx = rnd(820, 940);
-    ball.vy = -(640 + rnd(0, 90));
+    ball.vx = rnd(560, 660);
+    ball.vy = -(540 + rnd(0, 80));
     ball.side = "cpu";
     ball.lastHitter = null;
-    ball.spin = 6;
+    ball.spin = 5;
     state = "rally";
     if (el("status")) el("status").textContent = "電腦接發球…";
   }
@@ -136,18 +136,18 @@
   function doCpuServe() {
     ball.x = clamp(cpu.x, NET_X + 260, W - 40);
     ball.y = GROUND_Y - 150;
-    ball.vx = -rnd(820, 940);
-    ball.vy = -(640 + rnd(0, 90));
+    ball.vx = -rnd(560, 660);
+    ball.vy = -(540 + rnd(0, 80));
     ball.side = "player";
     ball.lastHitter = null;
-    ball.spin = -6;
+    ball.spin = -5;
     state = "rally";
     if (el("status")) el("status").textContent = "快按 Q 接一傳！";
   }
 
   function receiveBall(byPlayer) {
     var tx = byPlayer ? NET_X + rnd(-260, -160) : NET_X + rnd(160, 260);
-    launchTo(tx, GROUND_Y - 460, 0.9);
+    launchTo(tx, GROUND_Y - 460, 1.3);
     ball.spin = byPlayer ? 4 : -4;
     ball.hitCd = 0.4;
     if (byPlayer) {
@@ -160,7 +160,7 @@
 
   function setBall(byPlayer) {
     var tx = NET_X + (byPlayer ? -60 : 60);
-    launchTo(tx, GROUND_Y - 380, 0.85);
+    launchTo(tx, GROUND_Y - 380, 1.15);
     ball.spin = byPlayer ? 2 : -2;
     ball.hitCd = 0.45;
     if (byPlayer) rallyTouchesPlayer++;
@@ -169,10 +169,10 @@
 
   function spikeBall(byPlayer) {
     var dir = byPlayer ? 1 : -1;
-    var base = NET_X + dir * rnd(60, 90);
-    launchTo(base + dir * rnd(120, 380), GROUND_Y, 0.55);
+    var base = NET_X + dir * rnd(50, 80);
+    launchTo(base + dir * rnd(90, 260), GROUND_Y, 0.85);
     ball.hitCd = 0.5;
-    ball.spin = dir * 8;
+    ball.spin = dir * 6;
     if (byPlayer) rallyTouchesPlayer++;
     else rallyTouchesCpu++;
   }
