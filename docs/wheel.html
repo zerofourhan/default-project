@@ -245,7 +245,7 @@
     function spin(){
       if(spinning) return;
       const active = activeIndices();
-      if(active.length < 2){ alert("請勾選至少 2 位參與者"); return; }
+      if(active.length < 1){ alert("請勾選至少 1 位參與者"); return; }
       spinning = true;
       document.getElementById("spin-btn").disabled = true;
       const seg = (Math.PI*2)/active.length;
@@ -333,7 +333,7 @@
     });
     document.getElementById("settings-save").addEventListener("click", ()=>{
       const newNameList = document.getElementById("names-input").value.split(/\n/).map(s=>s.trim()).filter(Boolean);
-      if(newNameList.length < 40){ alert("名單至少需要 40 人"); return; }
+      if(newNameList.length === 0){ alert("名單不能為空"); return; }
       const oldCheckedMap = {}; names.forEach((n,i)=> oldCheckedMap[n]=checked[i]);
       names = newNameList;
       checked = names.map(n => (n in oldCheckedMap) ? oldCheckedMap[n] : true);
