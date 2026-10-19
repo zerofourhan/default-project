@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>轉盤抽獎 Wheel</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  <style>
+    :root{
+      --bg:#0f172a;--panel:#1e293b;--panel2:#334155;--text:#e2e8f0;--muted:#94a3b8;
+      --accent:#f59e0b;--accent2:#ef4444;--green:#22c55e;--blue:#3b82f6;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;font-family:system-ui,-apple-system,"Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--text)}
+    .app{display:flex;flex-direction:column;height:100vh;max-width:1200px;margin:0 auto;padding:12px;gap:12px}
+    header.topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 4px}
+    .brand h1{margin:0;font-size:22px}
+    .brand p{margin:0;font-size:12px;color:var(--muted)}
+    .top-actions{display:flex;gap:8px}
+    .icon-btn{background:var(--panel);border:1px solid var(--panel2);color:var(--text);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:16px}
+    .icon-btn:hover{background:var(--panel2)}
+    .main{display:grid;grid-template-columns:260px 1fr 260px;gap:12px;flex:1;min-height:0}
+    @media(max-width:900px){.main{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}}
+    .panel{background:var(--panel);border-radius:12px;padding:12px;display:flex;flex-direction:column;min-height:0}
+    .panel h2{margin:0 0 8px;font-size:16px}
+    .name-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:4px;padding-right:4px}
+    .name-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:var(--panel2)}
+    .name-item input{width:18px;height:18px}
+    .name-item label{flex:1;font-size:14px;cursor:pointer}
+    .name-item.disabled label{text-decoration:line-through;color:var(--muted)}
+    .wheel-wrap{position:relative;display:flex;align-items:center;justify-content:center;min-height:0}
+    canvas{max-width:100%;max-height:100%;aspect-ratio:1/1}
+    .pointer{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid var(--accent2);filter:drop-shadow(0 2px 2px #000)}
+    .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center}
+    .btn{border:none;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;color:#fff}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn.primary{background:var(--accent)}
+    .btn.blue{background:var(--blue)}
+    .btn.green{background:var(--green)}
+    .btn.gray{background:var(--panel2)}
+    .btn.red{background:var(--accent2)}
+    .winners{flex:1;overflow:auto;display:flex;flex-direction:column;gap:4px}
+    .winner-item{padding:6px 8px;border-radius:6px;background:var(--panel2);font-size:14px;display:flex;justify-content:space-between}
+    .winner-item .idx{color:var(--muted);font-size:12px}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100}
+    .overlay.hidden{display:none}
+    .modal{background:var(--panel);border-radius:14px;padding:20px;max-width:520px;width:90%;max-height:80vh;overflow:auto}
+    .modal h2{margin:0 0 12px}
+    .modal p{color:var(--muted);font-size:14px;margin:0 0 12px}
+    .modal .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px}
+    .field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+    .field label{font-size:13px;color:var(--muted)}
+    .field input,.field textarea,.field select{background:var(--panel2);border:1px solid #475569;color:var(--text);border-radius:8px;padding:8px;font-size:14px;font-family:inherit}
+    .field textarea{min-height:120px;resize:vertical}
+    .toggle{display:flex;align-items:center;gap:8px;font-size:14px}
+    .winner-popup{text-align:center}
+    .winner-popup .name{font-size:34px;font-weight:800;color:var(--accent);margin:12px 0}
+    .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:101}
+    .confetti i{position:absolute;width:8px;height:14px;opacity:.9;animation:fall 2.5s linear forwards}
+    @keyframes fall{0%{transform:translateY(-20px) rotate(0)}100%{transform:translateY(110vh) rotate:720deg}}
+    .stats{font-size:12px;color:var(--muted);text-align:center;margin-top:6px}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo" style="font-size:28px">🎡</span>
+        <div>
+          <h1>轉盤抽獎</h1>
+          <p class="sub">Wheel · 抽名字</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="menu-btn" title="功能菜單">⚙️ 菜單</button>
+      </div>
+    </header>
+
+    <div class="main">
+      <section class="panel">
+        <h2>勾選參與者</h2>
+        <div class="row" style="gap:6px;margin-bottom:8px">
+          <button class="btn gray" id="select-all" style="padding:6px 10px;font-size:12px">全選</button>
+          <button class="btn gray" id="select-none" style="padding:6px 10px;font-size:12px">全不選</button>
+        </div>
+        <div class="name-list" id="name-list"></div>
+        <div class="stats" id="stats"></div>
+      </section>
+
+      <section class="panel" style="align-items:center;justify-content:center">
+        <div class="wheel-wrap">
+          <div class="pointer"></div>
+          <canvas id="wheel" width="420" height="420"></canvas>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="spin-btn">🎯 抽獎</button>
+          <button class="btn blue" id="undo-btn">↩ 回上步</button>
+          <button class="btn green" id="reset-btn">🔄 一鍵復原</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>中獎紀錄</h2>
+        <div class="winners" id="winners"></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="settings-overlay">
+    <div class="modal">
+      <h2>功能菜單</h2>
+      <div class="field">
+        <label class="toggle"><input type="checkbox" id="remove-on-win" /> 中獎後取消勾選（需重新勾選才能回到轉盤）</label>
+      </div>
+      <div class="field">
+        <label>參與者名單（每行一個名字）</label>
+        <textarea id="names-input"></textarea>
+      </div>
+      <div class="row">
+        <button class="btn gray" id="settings-cancel">取消</button>
+        <button class="btn primary" id="settings-save">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="winner-overlay">
+    <div class="modal winner-popup">
+      <h2>🎉 中獎者</h2>
+      <div class="name" id="winner-name"></div>
+      <p id="winner-note"></p>
+      <div class="row">
+        <button class="btn primary" id="winner-close">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confetti" id="confetti"></div>
+
+  <script>
+    const DEFAULT_NAMES = Array.from({length:48}, (_,i) => "成員 " + String(i+1).padStart(2,"0"));
+    const COLORS = ["#ef4444","#f59e0b","#22c55e","#3b82f6","#a855f7","#ec4899","#14b8a6","#f97316","#6366f1","#84cc16"];
+
+    let names = loadNames();
+    let checked = loadChecked(names);
+    let removeOnWin = loadRemove();
+    let history = []; // {id, removed}
+    let winners = [];
+    let spinning = false;
+    let angle = 0;
+    let rafId = null;
+
+    function loadNames(){
+      try{
+        const raw = localStorage.getItem("wheel_names");
+        if(raw){ const arr = JSON.parse(raw); if(Array.isArray(arr) && arr.length) return arr; }
+      }catch(e){}
+      return [...DEFAULT_NAMES];
+    }
+    function loadChecked(names){
+      try{
+        const raw = localStorage.getItem("wheel_checked");
+        if(raw){ const obj = JSON.parse(raw); return names.map(n => obj[n] !== false); }
+      }catch(e){}
+      return names.map(()=>true);
+    }
+    function loadRemove(){
+      try{ return localStorage.getItem("wheel_remove")==="1"; }catch(e){ return false; }
+    }
+    function save(){
+      try{
+        localStorage.setItem("wheel_names", JSON.stringify(names));
+        const obj = {}; names.forEach((n,i)=> obj[n]=checked[i]);
+        localStorage.setItem("wheel_checked", JSON.stringify(obj));
+        localStorage.setItem("wheel_remove", removeOnWin?"1":"0");
+      }catch(e){}
+    }
+
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+
+    function activeIndices(){ return names.map((n,i)=> checked[i] ? i : -1).filter(i=>i>=0); }
+
+    function drawWheel(){
+      const size = canvas.width;
+      const cx = size/2, cy = size/2, r = size/2 - 8;
+      ctx.clearRect(0,0,size,size);
+      const active = activeIndices();
+      if(active.length===0){
+        ctx.fillStyle="#475569"; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="#fff"; ctx.font="16px sans-serif"; ctx.textAlign="center"; ctx.fillText("無參與者",cx,cy);
+        return;
+      }
+      const seg = (Math.PI*2)/active.length;
+      active.forEach((idx,k)=>{
+        const start = angle + k*seg;
+        const end = start + seg;
+        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,start,end); ctx.closePath();
+        ctx.fillStyle = COLORS[k % COLORS.length]; ctx.fill();
+        ctx.strokeStyle = "#0f172a"; ctx.lineWidth=2; ctx.stroke();
+        ctx.save();
+        ctx.translate(cx,cy); ctx.rotate(start + seg/2);
+        ctx.textAlign="right"; ctx.fillStyle="#fff"; ctx.font="bold 13px sans-serif";
+        const label = names[idx].length>8 ? names[idx].slice(0,8)+"…" : names[idx];
+        ctx.fillText(label, r-12, 4);
+        ctx.restore();
+      });
+      ctx.beginPath(); ctx.arc(cx,cy,24,0,Math.PI*2); ctx.fillStyle="#0f172a"; ctx.fill();
+      ctx.fillStyle="#fff"; ctx.font="bold 12px sans-serif"; ctx.textAlign="center"; ctx.fillText("抽",cx,cy+4);
+    }
+
+    function renderNames(){
+      const list = document.getElementById("name-list");
+      list.innerHTML = "";
+      names.forEach((n,i)=>{
+        const div = document.createElement("div");
+        div.className = "name-item" + (checked[i]?"":" disabled");
+        const cb = document.createElement("input");
+        cb.type="checkbox"; cb.checked = checked[i];
+        cb.addEventListener("change", ()=>{ checked[i]=cb.checked; save(); drawWheel(); updateStats(); });
+        const lbl = document.createElement("label");
+        lbl.textContent = n;
+        lbl.addEventListener("click", ()=>{ cb.checked=!cb.checked; cb.dispatchEvent(new Event("change")); });
+        div.appendChild(cb); div.appendChild(lbl);
+        list.appendChild(div);
+      });
+      updateStats();
+    }
+
+    function updateStats(){
+      const a = activeIndices().length;
+      document.getElementById("stats").textContent = `參與中：${a} / ${names.length}`;
+    }
+
+    function renderWinners(){
+      const w = document.getElementById("winners");
+      w.innerHTML = "";
+      winners.forEach((name,i)=>{
+        const div = document.createElement("div");
+        div.className="winner-item";
+        div.innerHTML = `<span>${name}</span><span class="idx">#${i+1}</span>`;
+        w.appendChild(div);
+      });
+    }
+
+    function spin(){
+      if(spinning) return;
+      const active = activeIndices();
+      if(active.length < 2){ alert("請勾選至少 2 位參與者"); return; }
+      spinning = true;
+      document.getElementById("spin-btn").disabled = true;
+      const seg = (Math.PI*2)/active.length;
+      const winnerK = Math.floor(Math.random()*active.length);
+      // final angle: pointer at top (-PI/2). We want winner segment center at top.
+      // segment center angle in wheel coords = angle + (winnerK+0.5)*seg. Need this ≡ -PI/2 (mod 2PI)
+      const targetCenter = -Math.PI/2;
+      const currentCenter = angle + (winnerK+0.5)*seg;
+      const delta = targetCenter - currentCenter;
+      const rounds = 6 + Math.floor(Math.random()*3);
+      const totalDelta = delta + rounds*Math.PI*2;
+      const duration = 4200;
+      const start = performance.now();
+      const startAngle = angle;
+      function ease(t){ return 1 - Math.pow(1-t, 3); }
+      function frame(now){
+        const t = Math.min(1, (now-start)/duration);
+        angle = startAngle + totalDelta*ease(t);
+        drawWheel();
+        if(t<1){ rafId=requestAnimationFrame(frame); }
+        else{
+          spinning=false;
+          document.getElementById("spin-btn").disabled=false;
+          const winnerIdx = active[winnerK];
+          const winnerName = names[winnerIdx];
+          // record
+          let removed = false;
+          if(removeOnWin){
+            checked[winnerIdx]=false; removed=true; save(); renderNames(); drawWheel();
+          }
+          history.push({idx:winnerIdx, removed});
+          winners.push(winnerName);
+          renderWinners();
+          showWinner(winnerName);
+        }
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function showWinner(name){
+      document.getElementById("winner-name").textContent = name;
+      document.getElementById("winner-note").textContent = removeOnWin ? "已取消勾選，需重新勾選才能再次抽獎" : "可重複抽獎";
+      document.getElementById("winner-overlay").classList.remove("hidden");
+      confettiBurst();
+    }
+
+    function confettiBurst(){
+      const c = document.getElementById("confetti");
+      c.innerHTML="";
+      for(let i=0;i<80;i++){
+        const el = document.createElement("i");
+        el.style.left = Math.random()*100+"vw";
+        el.style.background = COLORS[i%COLORS.length];
+        el.style.animationDelay = (Math.random()*0.5)+"s";
+        c.appendChild(el);
+      }
+      setTimeout(()=>{ c.innerHTML=""; }, 3000);
+    }
+
+    function undo(){
+      if(spinning) return;
+      if(history.length===0){ alert("沒有可回復的步驟"); return; }
+      const last = history.pop();
+      winners.pop();
+      if(last.removed){ checked[last.idx]=true; save(); renderNames(); }
+      drawWheel(); renderWinners();
+    }
+
+    function resetAll(){
+      if(spinning) return;
+      if(!confirm("確定一鍵復原？將還原所有勾選與中獎紀錄")) return;
+      checked = names.map(()=>true);
+      history = []; winners = [];
+      save(); renderNames(); drawWheel(); renderWinners();
+    }
+
+    // settings
+    document.getElementById("menu-btn").addEventListener("click", ()=>{
+      document.getElementById("names-input").value = names.join("\n");
+      document.getElementById("remove-on-win").checked = removeOnWin;
+      document.getElementById("settings-overlay").classList.remove("hidden");
+    });
+    document.getElementById("settings-cancel").addEventListener("click", ()=>{
+      document.getElementById("settings-overlay").classList.add("hidden");
+    });
+    document.getElementById("settings-save").addEventListener("click", ()=>{
+      const newNameList = document.getElementById("names-input").value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+      if(newNameList.length < 40){ alert("名單至少需要 40 人"); return; }
+      const oldCheckedMap = {}; names.forEach((n,i)=> oldCheckedMap[n]=checked[i]);
+      names = newNameList;
+      checked = names.map(n => (n in oldCheckedMap) ? oldCheckedMap[n] : true);
+      removeOnWin = document.getElementById("remove-on-win").checked;
+      history=[]; winners=[];
+      save(); renderNames(); drawWheel(); renderWinners();
+      document.getElementById("settings-overlay").classList.add("hidden");
+    });
+
+    document.getElementById("select-all").addEventListener("click", ()=>{ checked=checked.map(()=>true); save(); renderNames(); drawWheel(); });
+    document.getElementById("select-none").addEventListener("click", ()=>{ checked=checked.map(()=>false); save(); renderNames(); drawWheel(); });
+    document.getElementById("spin-btn").addEventListener("click", spin);
+    document.getElementById("undo-btn").addEventListener("click", undo);
+    document.getElementById("reset-btn").addEventListener("click", resetAll);
+    document.getElementById("winner-close").addEventListener("click", ()=>{ document.getElementById("winner-overlay").classList.add("hidden"); });
+
+    // init
+    renderNames();
+    drawWheel();
+  </script>
+</body>
+</html>
